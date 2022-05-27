@@ -14,18 +14,16 @@ class Action(Enum):
     SOUTH = 2
     WEST = 3
     EAST = 4
-    LOAD = 5
-    FIGHT = 6
+    FIGHT = 5
 
 
 class CellEntity(Enum):
     # entity encodings for grid observations
     OUT_OF_BOUNDS = 0
     EMPTY = 1
-    FOOD = 2
-    AGENT = 3
-    FIRE = 4
-    BIG_FIRE = 5
+    AGENT = 2
+    FIRE = 3
+    BIG_FIRE = 4
 
 
 class Player:
@@ -67,7 +65,7 @@ class ForagingEnv(Env):
 
     metadata = {"render.modes": ["human"]}
 
-    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, Action.LOAD, Action.FIGHT]
+    action_set = [Action.NORTH, Action.SOUTH, Action.WEST, Action.EAST, Action.FIGHT]
     Observation = namedtuple(
         "Observation",
         ["field", "actions", "players", "game_over", "sight", "current_step"],
@@ -351,8 +349,8 @@ class ForagingEnv(Env):
                 player.position[1] < self.cols - 1
                 and self.field[player.position[0], player.position[1] + 1] == 0
             )
-        elif action == Action.LOAD:
-            return self.adjacent_fire(*player.position) > 0
+        #elif action == Action.LOAD:
+        #    return self.adjacent_fire(*player.position) > 0
         elif action == Action.FIGHT:
             return self.adjacent_fire(*player.position)>0
 
@@ -551,7 +549,7 @@ class ForagingEnv(Env):
                 collisions[(player.position[0], player.position[1] - 1)].append(player)
             elif action == Action.EAST:
                 collisions[(player.position[0], player.position[1] + 1)].append(player)
-            elif action == Action.LOAD:
+            elif action == Action.FIGHT:
                 collisions[player.position].append(player)
                 loading_players.add(player)
 
@@ -575,16 +573,17 @@ class ForagingEnv(Env):
             ]
 
             adj_player_level = sum([a.level for a in adj_players])
+            print(adj_player_level)
 
             loading_players = loading_players - set(adj_players)
 
             if adj_player_level < fire:
-                # failed to load
+                # failed to fight
                 for a in adj_players:
                     a.reward -= self.penalty
                 continue
 
-            # else the fire was loaded and each player scores points
+            # else the fire was fighted and each player scores points
             for a in adj_players:
                 a.reward = float(a.level * fire)
                 if self._normalize_reward:

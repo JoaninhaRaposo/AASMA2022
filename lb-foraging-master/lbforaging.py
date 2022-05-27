@@ -30,14 +30,15 @@ def _game_loop(env, render):
 
         if render:
             env.render()
-            time.sleep(0.5)
+            time.sleep(0.1)
 
         done = np.all(ndone)
+        #done = False
     # print(env.players[0].score, env.players[1].score)
 
 
 def main(game_count=1, render=False):
-    env = gym.make("Foraging-8x8-2p-2f-v2")
+    env = gym.make("Foraging-8x8-2p-2f-coop-v2")
     obs = env.reset()
 
     for episode in range(game_count):

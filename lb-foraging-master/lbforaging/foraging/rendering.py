@@ -123,7 +123,6 @@ class Viewer(object):
         self.window.dispatch_events()
 
         self._draw_grid()
-        #self._draw_big_fire(env)
         self._draw_fire(env)
         
         self._draw_players(env)
@@ -211,32 +210,6 @@ class Viewer(object):
         for row, col in idxes:
             self._draw_badge(row, col, env.field[row, col])
     
-    
-    """def _draw_big_fire(self, env):
-        idxes = list(zip(*env.field.nonzero()))
-        idxes1 = idxes[:len(idxes)//2]
-        big_fires = []
-        batch = pyglet.graphics.Batch()
-        
-        # print(env.field)
-        for row, col in idxes1:
-        
-            big_fires.append(
-                pyglet.sprite.Sprite(
-                    self.img_big_fire,
-                    (self.grid_size + 1) * col,
-                    self.height - (self.grid_size + 1) * (row + 1),
-                    batch=batch,
-                )
-            )
-            
-        for a in big_fires:
-            a.update(scale=self.grid_size / a.width)
-       
-        batch.draw()
-
-        for row, col in idxes1:
-            self._draw_badge(row, col, env.field[row, col])"""
 
     def _draw_players(self, env):
         players = []
