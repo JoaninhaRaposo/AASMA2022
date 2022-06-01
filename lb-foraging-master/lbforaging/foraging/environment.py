@@ -115,6 +115,7 @@ class ForagingEnv(Env):
         self.viewer = None
 
         self.n_agents = len(self.players)
+        self.number_of_fires = max_fire
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -248,6 +249,7 @@ class ForagingEnv(Env):
         ]
 
     def spawn_fires(self, max_fires, max_level):
+        self.number_of_fires += 1
         fire_count = 0
         attempts = 0
         min_level = max_level if self.force_coop else 1
@@ -274,6 +276,7 @@ class ForagingEnv(Env):
         self._fire_spawned = self.field.sum()
 
     def spawn_big_fires(self, max_fires):
+        self.number_of_fires += 1
         fire_count = 0
         attempts = 0
        # min_level = max_level if self.force_coop else 1
@@ -592,6 +595,7 @@ class ForagingEnv(Env):
                     )  # normalize reward
             # and the fire is removed
             self.field[frow, fcol] = 0
+            self._fire_spawned -= 1
 
         self._game_over = (
             self.field.sum() == 0 or self._max_episode_steps <= self.current_step
