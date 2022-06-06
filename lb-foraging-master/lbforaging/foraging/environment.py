@@ -7,6 +7,8 @@ import gym
 from gym.utils import seeding
 import numpy as np
 
+import random
+import copy
 
 class Action(Enum):
     NONE = 0
@@ -84,8 +86,9 @@ class ForagingEnv(Env):
         max_episode_steps,
         force_coop,
         normalize_reward=True,
-        grid_observation=False,
+        grid_observation=True,
         penalty=0.0,
+        step_cost=-0.01
     ):
         self.logger = logging.getLogger(__name__)
         self.seed()
@@ -94,7 +97,7 @@ class ForagingEnv(Env):
         self.field = np.zeros(field_size, np.int32)
 
         self.penalty = penalty
-        
+
         self.max_fire = max_fire
         self._fire_spawned = 0.0
         self.max_player_level = max_player_level
@@ -513,6 +516,22 @@ class ForagingEnv(Env):
         nobs, _, _, _ = self._make_gym_obs()
         return nobs
 
+    def _init_render(self):
+        from .rendering import Viewer
+
+        self.viewer = Viewer((self.rows, self.cols))
+        self._rendering_initialized = True
+
+    def render(self, mode="human"):
+        if not self._rendering_initialized:
+            self._init_render()
+
+        return self.viewer.render(self, return_rgb_array=mode == "rgb_array")
+
+    def close(self):
+        if self.viewer:
+            self.viewer.close()
+
     def step(self, actions):
         self.current_step += 1
 
@@ -606,19 +625,3 @@ class ForagingEnv(Env):
             p.score += p.reward
 
         return self._make_gym_obs()
-
-    def _init_render(self):
-        from .rendering import Viewer
-
-        self.viewer = Viewer((self.rows, self.cols))
-        self._rendering_initialized = True
-
-    def render(self, mode="human"):
-        if not self._rendering_initialized:
-            self._init_render()
-
-        return self.viewer.render(self, return_rgb_array=mode == "rgb_array")
-
-    def close(self):
-        if self.viewer:
-            self.viewer.close()

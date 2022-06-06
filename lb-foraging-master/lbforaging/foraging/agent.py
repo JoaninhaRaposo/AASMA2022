@@ -32,6 +32,9 @@ class Agent:
     def step(self, obs):
         raise NotImplemented("You must implement an agent")
 
+    def see(self, observation: np.ndarray):
+        self.observation = observation
+    
     def _closest_food(self, obs, max_food_level=None, start=None):
 
         if start is None:
