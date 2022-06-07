@@ -27,7 +27,7 @@ class Action(Enum):
     FIGHT = 5
 
 def _game_loop(env, agent, agent1, render):
-    fire_limit = env.max_fire + 1
+    fire_limit = env.max_fire + 10
 
     obs = env.reset()
     done = False
@@ -37,14 +37,13 @@ def _game_loop(env, agent, agent1, render):
         time.sleep(0.5)
 
     while not done:
-        
-        
-        if 5 == randint(0,20) and fire_limit >= env._fire_spawned:
+
+        if 1 == randint(0,5) and fire_limit >= env._fire_spawned:
             r = random.choice([0,1])
-            if r == 1:
-                env.spawn_fires(2, max_level=2)
-            else:
-                env.spawn_big_fires(2)
+            # if r == 1:
+            env.spawn_fires(2, max_level=2)
+            # else:
+            #     env.spawn_big_fires(2)
         
 
         actions = env.action_space.sample()
@@ -101,7 +100,7 @@ class GreedyAgent(Agent):
         prey_found = closest_prey is not None
         # print(closest_prey)
         a = self.direction_to_go(agent_position, closest_prey)
-        print(Action(a))
+        #print(Action(a))
         return a if prey_found else random.randrange(N_ACTIONS)
 
     # ################# #
@@ -113,12 +112,9 @@ class GreedyAgent(Agent):
         Given the position of the agent and the position of a prey,
         returns the action to take in order to close the distance
         """
-        print(agent_position)
-        print(prey_position)
         distances = np.array(prey_position) - np.array(agent_position)
         abs_distances = np.absolute(distances)
-        print("d", distances)
-        print("a", abs_distances)
+
         if abs_distances[1] > abs_distances[0]:
             return self._close_horizontally(distances)
         elif abs_distances[1] < abs_distances[0]:

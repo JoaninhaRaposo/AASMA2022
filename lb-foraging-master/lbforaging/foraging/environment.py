@@ -436,7 +436,8 @@ class ForagingEnv(Env):
                 obs[self.max_fire * 3 + 3 * i] = p.position[0]
                 obs[self.max_fire * 3 + 3 * i + 1] = p.position[1]
                 obs[self.max_fire * 3 + 3 * i + 2] = p.level
-
+            
+            print("obs2", obs)
             return obs
 
         def make_global_grid_arrays():
@@ -508,7 +509,16 @@ class ForagingEnv(Env):
         self.spawn_fires(
             self.max_fire, max_level=sum(player_levels[:3])
         )
-        self.spawn_big_fires(self.max_fire)
+        self.spawn_fires(
+            self.max_fire, max_level=sum(player_levels[:3])
+        )
+        self.spawn_fires(
+            self.max_fire, max_level=sum(player_levels[:3])
+        )
+        self.spawn_fires(
+            self.max_fire, max_level=sum(player_levels[:3])
+        )
+        #self.spawn_big_fires(self.max_fire)
         self.current_step = 0
         self._game_over = False
         self._gen_valid_moves()
