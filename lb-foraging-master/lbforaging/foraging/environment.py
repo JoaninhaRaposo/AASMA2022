@@ -423,9 +423,10 @@ class ForagingEnv(Env):
                 obs[3 * i + 2] = 0
 
             for i, (y, x) in enumerate(zip(*np.nonzero(observation.field))):
-                obs[3 * i] = y
-                obs[3 * i + 1] = x
-                obs[3 * i + 2] = observation.field[y, x]
+                if 3 * i + 2 < len(obs):
+                    obs[3 * i] = y
+                    obs[3 * i + 1] = x
+                    obs[3 * i + 2] = observation.field[y, x]
 
             for i in range(len(self.players)):
                 obs[self.max_fire * 3 + 3 * i] = -1
@@ -437,7 +438,6 @@ class ForagingEnv(Env):
                 obs[self.max_fire * 3 + 3 * i + 1] = p.position[1]
                 obs[self.max_fire * 3 + 3 * i + 2] = p.level
             
-            print("obs2", obs)
             return obs
 
         def make_global_grid_arrays():
@@ -506,6 +506,9 @@ class ForagingEnv(Env):
         self.spawn_players(self.max_player_level)
         player_levels = sorted([player.level for player in self.players])
 
+        self.spawn_fires(
+            self.max_fire, max_level=sum(player_levels[:3])
+        )
         self.spawn_fires(
             self.max_fire, max_level=sum(player_levels[:3])
         )

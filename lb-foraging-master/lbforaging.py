@@ -27,7 +27,7 @@ class Action(Enum):
     FIGHT = 5
 
 def _game_loop(env, agent, agent1, render):
-    fire_limit = env.max_fire + 10
+    fire_limit = env.max_fire + 20
 
     obs = env.reset()
     done = False
@@ -37,15 +37,6 @@ def _game_loop(env, agent, agent1, render):
         time.sleep(0.5)
 
     while not done:
-
-        if 1 == randint(0,5) and fire_limit >= env._fire_spawned:
-            r = random.choice([0,1])
-            # if r == 1:
-            env.spawn_fires(2, max_level=2)
-            # else:
-            #     env.spawn_big_fires(2)
-        
-
         actions = env.action_space.sample()
 
         agent.see(obs)
@@ -55,6 +46,13 @@ def _game_loop(env, agent, agent1, render):
         action1 = agent1.action(env)
         
         nobs, nreward, ndone, _ = env.step([action, action1])
+        
+        if 1 == randint(0,5) and fire_limit >= env._fire_spawned:
+            r = random.choice([0,1])
+            # if r == 1:
+            env.spawn_fires(2, max_level=2)
+            # else:
+            #     env.spawn_big_fires(2)
 
         obs = nobs
         if sum(nreward) > 0:
@@ -83,7 +81,7 @@ class GreedyAgent(Agent):
 
     def action(self, env) -> int:
         obs = [int(x) for x in list(self.observation[0])]
-        print(obs)
+        # print(obs)
 
         agents_positions = obs[(self.n_agents * 3):]
         prey_positions = obs[:self.n_agents * 3]
@@ -178,7 +176,6 @@ def main(game_count=1, render=False):
     env = gym.make("Foraging-8x8-2p-2f-coop-v2")
     obs = env.reset()
 
-    print(env.action_space.sample())
     agent = GreedyAgent(0, 2)
     agent1 = GreedyAgent(1, 2)
 
