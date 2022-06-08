@@ -12,6 +12,7 @@ from enum import Enum
 import lbforaging
 from lbforaging.agent import Agent
 from random import randint
+from lbforaging.utils import compare_results
 
 logger = logging.getLogger(__name__)
 
@@ -26,45 +27,48 @@ class Action(Enum):
     EAST = 4
     FIGHT = 5
 
-def _game_loop(env, agent, agent1, render):
-    fire_limit = env.max_fire + 20
+def _game_loop(env, agents, render, n_episodes):
+    results = np.zeros(n_episodes)
 
-    obs = env.reset()
-    done = False
+    for episode in range(n_episodes):
+        if episode % 5 == 0:
+            print(f"Episode {episode} out of {n_episodes} completed.")
 
-    if render:
-        env.render()
-        time.sleep(0.5)
-
-    while not done:
-        actions = env.action_space.sample()
-
-        agent.see(obs)
-        agent1.see(obs)
-
-        action = agent.action(env)
-        action1 = agent1.action(env)
-        
-        nobs, nreward, ndone, _ = env.step([action, action1])
-        
-        if 1 == randint(0,5) and fire_limit >= env._fire_spawned:
-            r = random.choice([0,1])
-            # if r == 1:
-            env.spawn_fires(2, max_level=2)
-            # else:
-            #     env.spawn_big_fires(2)
-
-        obs = nobs
-        if sum(nreward) > 0:
-            print(nreward)
+        steps = 0
+        obs = env.reset()
+        done = False
 
         if render:
             env.render()
-            time.sleep(0.1)
+            time.sleep(0.5)
 
-        done = np.all(ndone)
-        #done = False
-    # print(env.players[0].score, env.players[1].score)
+        while not done:
+            steps += 1
+
+            actions = []
+            for agent in agents:
+                agent.see(obs)
+                if agent.isGreedy:
+                    actions.append(agent.action(env))
+                else:
+                    actions.append(agent.action())
+            
+            nobs, nreward, ndone, _ = env.step(actions)
+
+            obs = nobs
+            if sum(nreward) > 0:
+                print(nreward)
+
+            if render:
+                env.render()
+                time.sleep(0.1)
+
+            done = np.all(ndone)
+            #done = False
+        results[episode] = steps
+
+    return results
+        # print(env.players[0].score, env.players[1].score)
 
 class GreedyAgent(Agent):
     
@@ -78,6 +82,7 @@ class GreedyAgent(Agent):
         self.agent_id = agent_id
         self.n_agents = n_agents
         self.n_actions = N_ACTIONS
+        self.isGreedy = 1
 
     def action(self, env) -> int:
         obs = [int(x) for x in list(self.observation[0])]
@@ -167,6 +172,7 @@ class RandomAgent(Agent):
     def __init__(self, n_actions: int):
         super(RandomAgent, self).__init__("Random Agent")
         self.n_actions = n_actions
+        self.isGreedy = 0
 
     def action(self) -> int:
         return np.random.randint(self.n_actions)
@@ -176,14 +182,44 @@ def main(game_count=1, render=False):
     env = gym.make("Foraging-8x8-2p-2f-coop-v2")
     obs = env.reset()
 
-    agent = GreedyAgent(0, 2)
-    agent1 = GreedyAgent(1, 2)
+    # agent = GreedyAgent(0, 2)
+    # agent1 = GreedyAgent(1, 2)
 
-    #agent = RandomAgent(6)
-    #agent1 = RandomAgent(6)
+    # agent = RandomAgent(6)
+    # agent1 = RandomAgent(6)
 
+    teams = {
+
+        "Random Team": [
+            RandomAgent(6),
+            RandomAgent(6)
+        ],
+
+        "Greedy Team": [
+            GreedyAgent(agent_id=0, n_agents=2),
+            GreedyAgent(agent_id=1, n_agents=2)
+        ]
+    }
+
+    parser.add_argument("--episodes", type=int, default=5)
+    opt = parser.parse_args()
+
+    results = {}
+    for team, agents in teams.items():
+        result = _game_loop(env, agents, render, opt.episodes)
+        results[team] = result
+    
+    """
     for episode in range(game_count):
         _game_loop(env, agent, agent1, render)
+    """
+
+    compare_results(
+        results,
+        title="Teams Comparison on LBForaging Environment",
+        colors=["orange", "green"]
+    )
+
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ for s, p, f, c, grid_obs in product(sizes, players, foods, coop, grid_observatio
                 "field_size": (s, s),
                 "max_fire": f,
                 "sight": sight,
-                "max_episode_steps": 100,
+                "max_episode_steps": 50,
                 "force_coop": c,
                 "grid_observation": grid_obs,
             },

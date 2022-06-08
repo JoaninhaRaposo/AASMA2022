@@ -9,6 +9,7 @@ import numpy as np
 
 import random
 import copy
+from random import randint
 
 class Action(Enum):
     NONE = 0
@@ -547,6 +548,14 @@ class ForagingEnv(Env):
 
     def step(self, actions):
         self.current_step += 1
+
+        fire_limit = self.max_fire + 20
+        if 1 == randint(0,5) and fire_limit >= self._fire_spawned:
+            r = random.choice([0,1])
+            # if r == 1:
+            self.spawn_fires(2, max_level=2)
+            # else:
+            #     env.spawn_big_fires(2)
 
         for p in self.players:
             p.reward = 0
