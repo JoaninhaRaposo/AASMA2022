@@ -522,7 +522,7 @@ class ForagingEnv(Env):
         self.spawn_fires(
             self.max_fire, max_level=sum(player_levels[:3])
         )
-        #self.spawn_big_fires(self.max_fire)
+        # self.spawn_big_fires(self.max_fire)
         self.current_step = 0
         self._game_over = False
         self._gen_valid_moves()
@@ -550,12 +550,15 @@ class ForagingEnv(Env):
         self.current_step += 1
 
         fire_limit = self.max_fire + 20
-        if 1 == randint(0,5) and fire_limit >= self._fire_spawned:
+        
+        """
+        if 1 == randint(0,20) and fire_limit >= self._fire_spawned:
             r = random.choice([0,1])
-            # if r == 1:
-            self.spawn_fires(2, max_level=2)
-            # else:
-            #     env.spawn_big_fires(2)
+            if r == 1:
+                self.spawn_fires(2, max_level=2)
+            else:
+                self.spawn_big_fires(2)
+        """
 
         for p in self.players:
             p.reward = 0

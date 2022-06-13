@@ -12,6 +12,7 @@ from enum import Enum
 import lbforaging
 from lbforaging.agent import Agent
 from random import randint
+from typing import List, Tuple
 from lbforaging.utils import compare_results
 
 logger = logging.getLogger(__name__)
@@ -48,11 +49,12 @@ def _game_loop(env, agents, render, n_episodes):
             actions = []
             for agent in agents:
                 agent.see(obs)
-                if agent.isGreedy:
+                if agent.hasEnv:
                     actions.append(agent.action(env))
                 else:
                     actions.append(agent.action())
             
+            print(actions)
             nobs, nreward, ndone, _ = env.step(actions)
 
             obs = nobs
@@ -70,6 +72,91 @@ def _game_loop(env, agents, render, n_episodes):
     return results
         # print(env.players[0].score, env.players[1].score)
 
+class ConventionAgent(Agent):
+    
+    def __init__(self, agent_id: int, n_agents: int, social_conventions: List):
+        super(ConventionAgent, self).__init__(f"Convention Agent")
+        self.agent_id = agent_id
+        self.n_agents = n_agents
+        self.conventions = social_conventions
+        self.n_actions = N_ACTIONS
+        self.hasEnv = 0
+        
+    def action(self) -> int:
+        agent_order = self.conventions[0]
+        action_order = self.conventions[1]
+        obs = [int(x) for x in list(self.observation[0])]
+
+        # print(obs)
+        prey_pos = obs[:self.n_agents * 3]
+        agents_positions = obs[(self.n_agents * 3):]
+        agent_pos = agents_positions[self.agent_id * 3], agents_positions[(self.agent_id * 3) + 1]
+
+        index = -1
+        for el in agent_order:
+            if(el == self.agent_id):
+                index = el
+
+        print(self.agent_id, agent_pos, self.closest_prey(agent_pos, prey_pos), action_order[index])
+        mov_index = self.advance_to_pos(agent_pos,self.closest_prey(agent_pos, prey_pos), action_order[index])
+        print(mov_index)
+        return mov_index
+    
+    def closest_prey(self, agent_position, prey_positions):
+        """
+        Given the positions of an agent and a sequence of positions of all prey,
+        returns the positions of the closest prey
+        """
+        min = math.inf
+        closest_prey_position = None
+        n_preys = int(len(prey_positions) / 2)
+        for p in range(n_preys):
+            prey_position = prey_positions[p * 2], prey_positions[(p * 2) + 1]
+            distance = cityblock(agent_position, prey_position)
+            if distance < min:
+                min = distance
+                closest_prey_position = prey_position
+        return closest_prey_position
+
+    def advance_to_pos(self, agent_pos: Tuple, prey_pos: Tuple, agent_dest: int) -> int:
+    
+        def _get_prey_adj_locs(loc: Tuple) -> List[Tuple]:
+            prey_x = loc[1]
+            prey_y = loc[0]
+            return [(prey_x + 1, prey_y), (prey_x - 1, prey_y), (prey_x, prey_y + 1), (prey_x, prey_y - 1)]
+        
+        def _move_vertically(distances) -> int:
+            if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
+                return FIGHT
+            if distances[0] > 0:
+                return SOUTH
+            elif distances[0] < 0:
+                return NORTH
+            else:
+                return NONE
+            
+        def _move_horizontally(distances) -> int:
+            if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
+                return FIGHT
+            if distances[1] > 0:
+                return EAST
+            elif distances[1] < 0:
+                return WEST
+            else:
+                return NONE
+            
+        prey_adj_locs = _get_prey_adj_locs(prey_pos)
+        distance_dest = np.array(prey_adj_locs[agent_dest]) - np.array(agent_pos)
+        abs_distances = np.absolute(distance_dest)
+        if abs_distances[1] > abs_distances[0]:
+            return _move_horizontally(distance_dest)
+        elif abs_distances[1] < abs_distances[0]:
+            return _move_vertically(distance_dest)
+        else:
+            roll = np.random.uniform(0, 1)
+            return _move_horizontally(distance_dest) if roll > 0.5 else _move_vertically(distance_dest)
+
+
 class GreedyAgent(Agent):
     
     """
@@ -82,7 +169,7 @@ class GreedyAgent(Agent):
         self.agent_id = agent_id
         self.n_agents = n_agents
         self.n_actions = N_ACTIONS
-        self.isGreedy = 1
+        self.hasEnv = 1
 
     def action(self, env) -> int:
         obs = [int(x) for x in list(self.observation[0])]
@@ -172,7 +259,7 @@ class RandomAgent(Agent):
     def __init__(self, n_actions: int):
         super(RandomAgent, self).__init__("Random Agent")
         self.n_actions = n_actions
-        self.isGreedy = 0
+        self.hasEnv = 0
 
     def action(self) -> int:
         return np.random.randint(self.n_actions)
@@ -188,8 +275,9 @@ def main(game_count=1, render=False):
     # agent = RandomAgent(6)
     # agent1 = RandomAgent(6)
 
+    conventions = [[0, 1], [NORTH, SOUTH]]
     teams = {
-
+        """
         "Random Team": [
             RandomAgent(6),
             RandomAgent(6)
@@ -198,10 +286,15 @@ def main(game_count=1, render=False):
         "Greedy Team": [
             GreedyAgent(agent_id=0, n_agents=2),
             GreedyAgent(agent_id=1, n_agents=2)
+        ],
+        """
+        "Greedy Team \nw/ Social Convention": [
+            ConventionAgent(agent_id=0, n_agents=2, social_conventions=conventions),
+            ConventionAgent(agent_id=1, n_agents=2, social_conventions=conventions),
         ]
     }
 
-    parser.add_argument("--episodes", type=int, default=5)
+    parser.add_argument("--episodes", type=int, default=10)
     opt = parser.parse_args()
 
     results = {}
@@ -217,7 +310,7 @@ def main(game_count=1, render=False):
     compare_results(
         results,
         title="Teams Comparison on LBForaging Environment",
-        colors=["orange", "green"]
+        colors=["orange", "green", "blue"]
     )
 
 
