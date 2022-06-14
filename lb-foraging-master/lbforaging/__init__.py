@@ -21,5 +21,6 @@ for s, p, f, c, grid_obs in product(sizes, players, foods, coop, grid_observatio
                 "max_episode_steps": 50,
                 "force_coop": c,
                 "grid_observation": grid_obs,
+                "total_fires_fighted": 0
             },
         )

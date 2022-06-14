@@ -7,6 +7,7 @@ import os
 from random import random
 import sys
 
+
 import numpy as np
 import math
 import six

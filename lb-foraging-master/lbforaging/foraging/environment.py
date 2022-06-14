@@ -85,6 +85,7 @@ class ForagingEnv(Env):
         max_fire,
         sight,
         max_episode_steps,
+        total_fires_fighted, 
         force_coop,
         normalize_reward=True,
         grid_observation=True,
@@ -109,6 +110,7 @@ class ForagingEnv(Env):
         self._rendering_initialized = False
         self._valid_actions = None
         self._max_episode_steps = max_episode_steps
+        self.total_fires_fighted = 0
 
         self._normalize_reward = normalize_reward
         self._grid_observation = grid_observation
@@ -505,6 +507,7 @@ class ForagingEnv(Env):
 
     def reset(self):
         self.field = np.zeros(self.field_size, np.int32)
+        self.total_fires_fighted = 0
         self.spawn_players(self.max_player_level)
         player_levels = sorted([player.level for player in self.players])
 
@@ -546,6 +549,9 @@ class ForagingEnv(Env):
     def close(self):
         if self.viewer:
             self.viewer.close()
+
+    def get_total_fires_fighted(self):
+        return self.total_fires_fighted
 
     def step(self, actions):
         self.current_step += 1
@@ -640,7 +646,7 @@ class ForagingEnv(Env):
             # and the fire is removed
             self.field[frow, fcol] = 0
             self._fire_spawned -= 1
-
+            self.total_fires_fighted += 1 
         self._game_over = (
             self.field.sum() == 0 or self._max_episode_steps <= self.current_step
         )
