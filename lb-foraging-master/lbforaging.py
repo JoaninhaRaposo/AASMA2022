@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 N_ACTIONS = 6
 NONE, NORTH, SOUTH, WEST, EAST, FIGHT = range(N_ACTIONS)
 
+MOVEMENTS = 6
+GO_SOUTH, GO_WEST, GO_NORTH, GO_EAST, GO_STAY, GO_FIGHT = range(MOVEMENTS)
+
 class Action(Enum):
     NONE = 0
     NORTH = 1
@@ -54,7 +57,7 @@ def _game_loop(env, agents, render, n_episodes):
                 else:
                     actions.append(agent.action())
             
-            print(actions)
+            # print(actions)
             nobs, nreward, ndone, _ = env.step(actions)
 
             obs = nobs
@@ -72,91 +75,6 @@ def _game_loop(env, agents, render, n_episodes):
     return results
         # print(env.players[0].score, env.players[1].score)
 
-class ConventionAgent(Agent):
-    
-    def __init__(self, agent_id: int, n_agents: int, social_conventions: List):
-        super(ConventionAgent, self).__init__(f"Convention Agent")
-        self.agent_id = agent_id
-        self.n_agents = n_agents
-        self.conventions = social_conventions
-        self.n_actions = N_ACTIONS
-        self.hasEnv = 0
-        
-    def action(self) -> int:
-        agent_order = self.conventions[0]
-        action_order = self.conventions[1]
-        obs = [int(x) for x in list(self.observation[0])]
-
-        # print(obs)
-        prey_pos = obs[:self.n_agents * 3]
-        agents_positions = obs[(self.n_agents * 3):]
-        agent_pos = agents_positions[self.agent_id * 3], agents_positions[(self.agent_id * 3) + 1]
-
-        index = -1
-        for el in agent_order:
-            if(el == self.agent_id):
-                index = el
-
-        print(self.agent_id, agent_pos, self.closest_prey(agent_pos, prey_pos), action_order[index])
-        mov_index = self.advance_to_pos(agent_pos,self.closest_prey(agent_pos, prey_pos), action_order[index])
-        print(mov_index)
-        return mov_index
-    
-    def closest_prey(self, agent_position, prey_positions):
-        """
-        Given the positions of an agent and a sequence of positions of all prey,
-        returns the positions of the closest prey
-        """
-        min = math.inf
-        closest_prey_position = None
-        n_preys = int(len(prey_positions) / 2)
-        for p in range(n_preys):
-            prey_position = prey_positions[p * 2], prey_positions[(p * 2) + 1]
-            distance = cityblock(agent_position, prey_position)
-            if distance < min:
-                min = distance
-                closest_prey_position = prey_position
-        return closest_prey_position
-
-    def advance_to_pos(self, agent_pos: Tuple, prey_pos: Tuple, agent_dest: int) -> int:
-    
-        def _get_prey_adj_locs(loc: Tuple) -> List[Tuple]:
-            prey_x = loc[1]
-            prey_y = loc[0]
-            return [(prey_x + 1, prey_y), (prey_x - 1, prey_y), (prey_x, prey_y + 1), (prey_x, prey_y - 1)]
-        
-        def _move_vertically(distances) -> int:
-            if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
-                return FIGHT
-            if distances[0] > 0:
-                return SOUTH
-            elif distances[0] < 0:
-                return NORTH
-            else:
-                return NONE
-            
-        def _move_horizontally(distances) -> int:
-            if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
-                return FIGHT
-            if distances[1] > 0:
-                return EAST
-            elif distances[1] < 0:
-                return WEST
-            else:
-                return NONE
-            
-        prey_adj_locs = _get_prey_adj_locs(prey_pos)
-        distance_dest = np.array(prey_adj_locs[agent_dest]) - np.array(agent_pos)
-        abs_distances = np.absolute(distance_dest)
-        if abs_distances[1] > abs_distances[0]:
-            return _move_horizontally(distance_dest)
-        elif abs_distances[1] < abs_distances[0]:
-            return _move_vertically(distance_dest)
-        else:
-            roll = np.random.uniform(0, 1)
-            return _move_horizontally(distance_dest) if roll > 0.5 else _move_vertically(distance_dest)
-
-
 class GreedyAgent(Agent):
     
     """
@@ -172,11 +90,11 @@ class GreedyAgent(Agent):
         self.hasEnv = 1
 
     def action(self, env) -> int:
-        obs = [int(x) for x in list(self.observation[0])]
+        obs = [int(x) for x in list(env._make_gym_obs()[0][0])]
         # print(obs)
 
-        agents_positions = obs[(self.n_agents * 3):]
-        prey_positions = obs[:self.n_agents * 3]
+        agents_positions = obs[(len(obs) - self.n_agents * 3):]
+        prey_positions = obs[:(len(obs) - self.n_agents * 3)]
 
         fire_positions = []
         for ele in range(0,len(prey_positions)):
@@ -184,14 +102,12 @@ class GreedyAgent(Agent):
                 fire_positions.append(prey_positions[ele])
                 
         agent_position = agents_positions[self.agent_id * 3], agents_positions[(self.agent_id * 3) + 1]
-        # print("Agents", agent_position)
-        # print("Fires", fire_positions)
+        # print("Agents", agents_positions)
+        # print("Fires", prey_positions)
         closest_prey = self.closest_prey(agent_position, fire_positions)
         prey_found = closest_prey is not None
         # print(closest_prey)
-        a = self.direction_to_go(agent_position, closest_prey)
-        #print(Action(a))
-        return a if prey_found else random.randrange(N_ACTIONS)
+        return self.direction_to_go(agent_position, closest_prey) if prey_found else random.randrange(N_ACTIONS)
 
     # ################# #
     # Auxiliary Methods #
@@ -221,9 +137,12 @@ class GreedyAgent(Agent):
         min = math.inf
         closest_prey_position = None
         n_preys = int(len(prey_positions) / 2)
+        print("Fogos", prey_positions)
         for p in range(n_preys):
             prey_position = prey_positions[p * 2], prey_positions[(p * 2) + 1]
             distance = cityblock(agent_position, prey_position)
+            if prey_position == (-1, -1):
+                continue
             if distance < min:
                 min = distance
                 closest_prey_position = prey_position
@@ -282,15 +201,10 @@ def main(game_count=1, render=False):
             RandomAgent(6),
             RandomAgent(6)
         ],
-
+        """
         "Greedy Team": [
             GreedyAgent(agent_id=0, n_agents=2),
             GreedyAgent(agent_id=1, n_agents=2)
-        ],
-        """
-        "Greedy Team \nw/ Social Convention": [
-            ConventionAgent(agent_id=0, n_agents=2, social_conventions=conventions),
-            ConventionAgent(agent_id=1, n_agents=2, social_conventions=conventions),
         ]
     }
 

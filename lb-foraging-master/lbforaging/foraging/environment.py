@@ -130,6 +130,7 @@ class ForagingEnv(Env):
         - all of the board (board_size^2) with fires
         - player description (x, y, level)*player_count
         """
+        self.max_fire = 7
         if not self._grid_observation:
             field_x = self.field.shape[1]
             field_y = self.field.shape[0]
@@ -549,16 +550,16 @@ class ForagingEnv(Env):
     def step(self, actions):
         self.current_step += 1
 
-        fire_limit = self.max_fire + 20
+        fire_limit = 7
         
-        """
+        
         if 1 == randint(0,20) and fire_limit >= self._fire_spawned:
             r = random.choice([0,1])
-            if r == 1:
-                self.spawn_fires(2, max_level=2)
-            else:
-                self.spawn_big_fires(2)
-        """
+            # if r == 1:
+            self.spawn_fires(2, max_level=2)
+            # else:
+            # self.spawn_big_fires(2)
+        
 
         for p in self.players:
             p.reward = 0
