@@ -621,7 +621,6 @@ class ForagingEnv(Env):
             ]
 
             adj_player_level = sum([a.level for a in adj_players])
-            print(adj_player_level)
 
             loading_players = loading_players - set(adj_players)
 
