@@ -65,7 +65,44 @@ def _game_loop(env, agents, render, n_episodes):
 
    
     return results, fires_fighted
-        
+
+
+def _close_horizontally(distances):
+    if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
+        return FIGHT
+    if distances[1] > 0:
+        return EAST
+    elif distances[1] < 0:
+        return WEST
+    else:
+        return NONE
+
+def _close_vertically(distances):
+    if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
+        return FIGHT
+    if distances[0] > 0:
+        return SOUTH
+    elif distances[0] < 0:
+        return NORTH
+    else:
+        return NONE
+
+def direction_to_go(agent_position, prey_position):
+    """
+    Given the position of the agent and the position of a prey,
+    returns the action to take in order to close the distance
+    """
+    distances = np.array(prey_position) - np.array(agent_position)
+    abs_distances = np.absolute(distances)
+
+    if abs_distances[1] > abs_distances[0]:
+        return _close_horizontally(distances)
+    elif abs_distances[1] < abs_distances[0]:
+        return _close_vertically(distances)
+    else:
+        roll = random.uniform(0, 1)
+        return _close_horizontally(distances) if roll > 0.5 else _close_vertically(distances)
+
 class ConventionAgent(Agent):
     
     def __init__(self, agent_id: int, n_agents: int, social_conventions: List): #social_conventions: List with [1] Agent order
@@ -113,7 +150,7 @@ class ConventionAgent(Agent):
                 if closest_prey == closest_prey_to_other:
                     if self.agent_id == agent_order[0]: #agent have priority
                         
-                        return self.direction_to_go(agent_position, closest_prey)
+                        return direction_to_go(agent_position, closest_prey)
                     else: #does not have priority: chooses another fire
                        
                         for i in range((len(fire_positions)//2)-1):
@@ -124,40 +161,22 @@ class ConventionAgent(Agent):
                         new_closest_prey = self.closest_prey(agent_position, fire_positions)
                         new_prey_found = new_closest_prey is not None
                         if new_prey_found:
-                            return self.direction_to_go(agent_position, new_closest_prey)
+                            return direction_to_go(agent_position, new_closest_prey)
                         else:
                             return random.randrange(N_ACTIONS)
                 else:
-                    return self.direction_to_go(agent_position, closest_prey)
+                    return direction_to_go(agent_position, closest_prey)
 
             else:
-                return self.direction_to_go(agent_position, closest_prey)
+                return direction_to_go(agent_position, closest_prey)
         else:
 
             return random.randrange(N_ACTIONS)
 
-        
-       
-    
+
     # ################# #
     # Auxiliary Methods #
     # ################# #
-
-    def direction_to_go(self, agent_position, prey_position):
-        """
-        Given the position of the agent and the position of a prey,
-        returns the action to take in order to close the distance
-        """
-        distances = np.array(prey_position) - np.array(agent_position)
-        abs_distances = np.absolute(distances)
-
-        if abs_distances[1] > abs_distances[0]:
-            return self._close_horizontally(distances)
-        elif abs_distances[1] < abs_distances[0]:
-            return self._close_vertically(distances)
-        else:
-            roll = random.uniform(0, 1)
-            return self._close_horizontally(distances) if roll > 0.5 else self._close_vertically(distances)
 
     def closest_prey(self, agent_position, prey_positions):  
         """
@@ -176,30 +195,6 @@ class ConventionAgent(Agent):
                 min = distance
                 closest_prey_position = prey_position
         return closest_prey_position
-
-    # ############### #
-    # Private Methods #
-    # ############### #
-
-    def _close_horizontally(self, distances):
-        if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
-            return FIGHT
-        if distances[1] > 0:
-            return EAST
-        elif distances[1] < 0:
-            return WEST
-        else:
-            return NONE
-
-    def _close_vertically(self, distances):
-        if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
-            return FIGHT
-        if distances[0] > 0:
-            return SOUTH
-        elif distances[0] < 0:
-            return NORTH
-        else:
-            return NONE
 
 
 class CoordAgent(Agent):
@@ -232,27 +227,11 @@ class CoordAgent(Agent):
 
         closest_prey = self.closest_prey(agent_position, fire_positions, self.agent_id, self.size)
         prey_found = closest_prey is not None
-        return self.direction_to_go(agent_position, closest_prey) if prey_found else random.randrange(N_ACTIONS)
+        return direction_to_go(agent_position, closest_prey) if prey_found else random.randrange(N_ACTIONS)
 
     # ################# #
     # Auxiliary Methods #
     # ################# #
-
-    def direction_to_go(self, agent_position, prey_position):
-        """
-        Given the position of the agent and the position of a prey,
-        returns the action to take in order to close the distance
-        """
-        distances = np.array(prey_position) - np.array(agent_position)
-        abs_distances = np.absolute(distances)
-
-        if abs_distances[1] > abs_distances[0]:
-            return self._close_horizontally(distances)
-        elif abs_distances[1] < abs_distances[0]:
-            return self._close_vertically(distances)
-        else:
-            roll = random.uniform(0, 1)
-            return self._close_horizontally(distances) if roll > 0.5 else self._close_vertically(distances)
 
     def closest_prey(self, agent_position, prey_positions, agent_id, size):
         """
@@ -276,30 +255,6 @@ class CoordAgent(Agent):
                     min = distance
                     closest_prey_position = prey_position
         return closest_prey_position
-
-    # ############### #
-    # Private Methods #
-    # ############### #
-
-    def _close_horizontally(self, distances):
-        if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
-            return FIGHT
-        if distances[1] > 0:
-            return EAST
-        elif distances[1] < 0:
-            return WEST
-        else:
-            return NONE
-
-    def _close_vertically(self, distances):
-        if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
-            return FIGHT
-        if distances[0] > 0:
-            return SOUTH
-        elif distances[0] < 0:
-            return NORTH
-        else:
-            return NONE
 
 class GreedyAgent(Agent):
     
@@ -329,27 +284,11 @@ class GreedyAgent(Agent):
         agent_position = agents_positions[self.agent_id * 3], agents_positions[(self.agent_id * 3) + 1]
         closest_prey = self.closest_prey(agent_position, fire_positions)
         prey_found = closest_prey is not None
-        return self.direction_to_go(agent_position, closest_prey) if prey_found else random.randrange(N_ACTIONS)
+        return direction_to_go(agent_position, closest_prey) if prey_found else random.randrange(N_ACTIONS)
 
     # ################# #
     # Auxiliary Methods #
     # ################# #
-
-    def direction_to_go(self, agent_position, prey_position):
-        """
-        Given the position of the agent and the position of a prey,
-        returns the action to take in order to close the distance
-        """
-        distances = np.array(prey_position) - np.array(agent_position)
-        abs_distances = np.absolute(distances)
-
-        if abs_distances[1] > abs_distances[0]:
-            return self._close_horizontally(distances)
-        elif abs_distances[1] < abs_distances[0]:
-            return self._close_vertically(distances)
-        else:
-            roll = random.uniform(0, 1)
-            return self._close_horizontally(distances) if roll > 0.5 else self._close_vertically(distances)
 
     def closest_prey(self, agent_position, prey_positions):
         """
@@ -368,31 +307,6 @@ class GreedyAgent(Agent):
                 min = distance
                 closest_prey_position = prey_position
         return closest_prey_position
-
-    # ############### #
-    # Private Methods #
-    # ############### #
-
-    def _close_horizontally(self, distances):
-        if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
-            return FIGHT
-        if distances[1] > 0:
-            return EAST
-        elif distances[1] < 0:
-            return WEST
-        else:
-            return NONE
-
-    def _close_vertically(self, distances):
-        if np.absolute(distances[0]) + np.absolute(distances[1]) < 2:
-            return FIGHT
-        if distances[0] > 0:
-            return SOUTH
-        elif distances[0] < 0:
-            return NORTH
-        else:
-            return NONE
-
 
 class RandomAgent(Agent):
     
