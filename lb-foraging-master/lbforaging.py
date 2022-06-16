@@ -362,13 +362,13 @@ def main(game_count=1, render=False):
 
     compare_results(
         results,
-        title="Teams Comparison on LBForaging Environment",
+        title="Teams Comparison",
         colors=["purple", "green", "blue", "violet"]
     )
 
     compare_results(
         total_fires,
-        title="Teams Comparison on LBForaging Environment",
+        title="Teams",
         metric="Fires fighted in 10 steps per episode",
         colors=["purple", "green", "blue", "violet"]
     )

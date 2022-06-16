@@ -266,6 +266,8 @@ class ForagingEnv(Env):
             row = self.np_random.randint(1, self.rows - 1)
             col = self.np_random.randint(1, self.cols - 1)
 
+            
+
             # check if it has neighbors:
             if (
                 self.neighborhood(row, col).sum() > 0
@@ -561,10 +563,9 @@ class ForagingEnv(Env):
         
         if 1 == randint(0,20) and fire_limit >= self._fire_spawned:
             r = random.choice([0,1])
-            # if r == 1:
-            self.spawn_fires(2, max_level=2)
-            # else:
-            # self.spawn_big_fires(2)
+            if r == 1:
+                self.spawn_fires(2, max_level=2)
+
         
 
         for p in self.players:

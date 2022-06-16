@@ -138,6 +138,8 @@ def compare_results(results, confidence=0.95, title="Agents Comparison", metric=
     means = [result.mean() for result in results.values()]
     stds = [result.std() for result in results.values()]
     N = [result.size for result in results.values()]
+    print("Means: {}".format(means))
+    print("stds: {}".format(stds))
 
     plot_confidence_bar(
         names=names,
