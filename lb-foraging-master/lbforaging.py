@@ -369,7 +369,7 @@ def main(game_count=1, render=False):
     compare_results(
         total_fires,
         title="Teams",
-        metric="Fires fighted in 10 steps per episode",
+        metric="Fires fought in 10 steps per episode",
         colors=["purple", "green", "blue", "violet"]
     )
 
