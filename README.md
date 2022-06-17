@@ -3,8 +3,18 @@ Make sure to have python3 installed.
 ## Install the requirements
 1. Open the folder fire-emergency-master.
 2. Create and activate a virtual environment and install the requirements with the command:
- **pip install -r requirements.txt**
+```sh
+pip install -r requirements.txt
+```
 ## Run the environment
-3. Use the following command: **python3 firemergency.py**
-3.1 To see the rendered version of the program use the command:**python3 firemergency.py --render**
+3. Use the following command: 
+```sh
+python3 firemergency.py
+```
+or 
+```sh
+python3 firemergency.py --render
+```
+to see the rendered version of the program.
+
 
