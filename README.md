@@ -5,5 +5,5 @@ Make sure to have python3 installed.
 2. Create and activate a virtual environment and install the requirements with the command:
  **pip install -r requirements.txt**
 ## Run the environment
-3. Use the following command: **python3 ./firemergency.py**
+3. Use the following command: **python3 firemergency.py**
 
