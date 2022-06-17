@@ -6,4 +6,5 @@ Make sure to have python3 installed.
  **pip install -r requirements.txt**
 ## Run the environment
 3. Use the following command: **python3 firemergency.py**
+3.1 To see the rendered version of the program use the command:**python3 firemergency.py --render**
 
