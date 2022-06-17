@@ -11,8 +11,7 @@ from enum import Enum
 
 import lbforaging
 from lbforaging.agent import Agent
-from random import randint
-from typing import List, Tuple
+from typing import List
 from lbforaging.utils import compare_results
 
 logger = logging.getLogger(__name__)
@@ -87,12 +86,12 @@ def _close_vertically(distances):
     else:
         return NONE
 
-def direction_to_go(agent_position, prey_position):
+def direction_to_go(agent_position, fire_position):
     """
-    Given the position of the agent and the position of a prey,
+    Given the position of the agent and the position of a fire,
     returns the action to take in order to close the distance
     """
-    distances = np.array(prey_position) - np.array(agent_position)
+    distances = np.array(fire_position) - np.array(agent_position)
     abs_distances = np.absolute(distances)
 
     if abs_distances[1] > abs_distances[0]:
@@ -121,20 +120,20 @@ class ConventionAgent(Agent):
         obs = [int(x) for x in list(env._make_gym_obs()[0][0])]
         
         agents_positions = obs[(len(obs) - self.n_agents * 3):]
-        prey_positions = obs[:(len(obs) - self.n_agents * 3)]
+        fire_positions = obs[:(len(obs) - self.n_agents * 3)]
 
-        fire_positions = []
-        for ele in range(0,len(prey_positions)):
+        aux_fire_positions = []
+        for ele in range(0,len(fire_positions)):
             if ele % 3 != 2:
-                fire_positions.append(prey_positions[ele])
+                aux_fire_positions.append(fire_positions[ele])
                 
         agent_position = agents_positions[self.agent_id * 3], agents_positions[(self.agent_id * 3) + 1]
         
       
         #Find closest fire to self agent
-        closest_prey = self.closest_prey(agent_position, fire_positions)
-        prey_found = closest_prey is not None
-        #a = self.direction_to_go(agent_position, closest_prey)
+        closest_fire = self.closest_fire(agent_position, aux_fire_positions)
+        fire_found = closest_fire is not None
+       
 
         #Find the closest fire to the other agent
         if(self.agent_id == 1):
@@ -142,33 +141,33 @@ class ConventionAgent(Agent):
         else:
             other_id = 1
         other_agent_position = agents_positions[other_id * 3], agents_positions[(other_id * 3) + 1]
-        closest_prey_to_other = self.closest_prey(other_agent_position,fire_positions)
+        closest_fire_to_other = self.closest_fire(other_agent_position,aux_fire_positions)
  
-        other_prey_found = closest_prey_to_other is not None
-        if prey_found:  
-            if other_prey_found:
-                if closest_prey == closest_prey_to_other:
+        other_fire_found = closest_fire_to_other is not None
+        if fire_found:  
+            if other_fire_found:
+                if closest_fire == closest_fire_to_other:
                     if self.agent_id == agent_order[0]: #agent have priority
                         
-                        return direction_to_go(agent_position, closest_prey)
+                        return direction_to_go(agent_position, closest_fire)
                     else: #does not have priority: chooses another fire
                        
-                        for i in range((len(fire_positions)//2)-1):
-                            if(fire_positions[2*i]==closest_prey_to_other[0] and fire_positions[2*i+1]==closest_prey_to_other[1]):
-                                del fire_positions[2*i]
-                                del fire_positions[2*i]
+                        for i in range((len(aux_fire_positions)//2)-1):
+                            if(aux_fire_positions[2*i]==closest_fire_to_other[0] and aux_fire_positions[2*i+1]==closest_fire_to_other[1]):
+                                del aux_fire_positions[2*i]
+                                del aux_fire_positions[2*i]
                     
-                        new_closest_prey = self.closest_prey(agent_position, fire_positions)
-                        new_prey_found = new_closest_prey is not None
-                        if new_prey_found:
-                            return direction_to_go(agent_position, new_closest_prey)
+                        new_closest_fire = self.closest_fire(agent_position, aux_fire_positions)
+                        new_fire_found = new_closest_fire is not None
+                        if new_fire_found:
+                            return direction_to_go(agent_position, new_closest_fire)
                         else:
                             return random.randrange(N_ACTIONS)
                 else:
-                    return direction_to_go(agent_position, closest_prey)
+                    return direction_to_go(agent_position, closest_fire)
 
             else:
-                return direction_to_go(agent_position, closest_prey)
+                return direction_to_go(agent_position, closest_fire)
         else:
 
             return random.randrange(N_ACTIONS)
@@ -178,31 +177,27 @@ class ConventionAgent(Agent):
     # Auxiliary Methods #
     # ################# #
 
-    def closest_prey(self, agent_position, prey_positions):  
+    def closest_fire(self, agent_position, fire_positions):  
         """
-        Given the positions of an agent and a sequence of positions of all prey,
-        returns the positions of the closest prey
+        Given the positions of an agent and a sequence of positions of all fire,
+        returns the positions of the closest fire
         """
         min = math.inf
-        closest_prey_position = None
-        n_preys = int(len(prey_positions) / 2)
-        for p in range(n_preys):
-            prey_position = prey_positions[p * 2], prey_positions[(p * 2) + 1]
-            if prey_position == (-1, -1):
+        closest_fire_position = None
+        n_fires = int(len(fire_positions) / 2)
+        for p in range(n_fires):
+            fire_position = fire_positions[p * 2], fire_positions[(p * 2) + 1]
+            if fire_position == (-1, -1):
                 continue
-            distance = cityblock(agent_position, prey_position)
+            distance = cityblock(agent_position, fire_position)
             if distance < min:
                 min = distance
-                closest_prey_position = prey_position
-        return closest_prey_position
+                closest_fire_position = fire_position
+        return closest_fire_position
 
 
 class CoordAgent(Agent):
     
-    """
-    A baseline agent for the SimplifiedPredatorPrey environment.
-    The greedy agent finds the nearest prey and moves towards it.
-    """
 
     def __init__(self, size, agent_id, n_agents):
         super(CoordAgent, self).__init__(f"Coord Agent")
@@ -216,52 +211,48 @@ class CoordAgent(Agent):
         obs = [int(x) for x in list(env._make_gym_obs()[0][0])]
 
         agents_positions = obs[(len(obs) - self.n_agents * 3):]
-        prey_positions = obs[:(len(obs) - self.n_agents * 3)]
+        fire_positions = obs[:(len(obs) - self.n_agents * 3)]
 
-        fire_positions = []
-        for ele in range(0,len(prey_positions)):
+        aux_fire_positions = []
+        for ele in range(0,len(fire_positions)):
             if ele % 3 != 2:
-                fire_positions.append(prey_positions[ele])
+                aux_fire_positions.append(fire_positions[ele])
                 
         agent_position = agents_positions[self.agent_id * 3], agents_positions[(self.agent_id * 3) + 1]
 
-        closest_prey = self.closest_prey(agent_position, fire_positions, self.agent_id, self.size)
-        prey_found = closest_prey is not None
-        return direction_to_go(agent_position, closest_prey) if prey_found else random.randrange(N_ACTIONS)
+        closest_fire = self.closest_fire(agent_position, aux_fire_positions, self.agent_id, self.size)
+        fire_found = closest_fire is not None
+        return direction_to_go(agent_position, closest_fire) if fire_found else random.randrange(N_ACTIONS)
 
     # ################# #
     # Auxiliary Methods #
     # ################# #
 
-    def closest_prey(self, agent_position, prey_positions, agent_id, size):
+    def closest_fire(self, agent_position, fire_positions, agent_id, size):
         """
-        Given the positions of an agent and a sequence of positions of all prey,
-        returns the positions of the closest prey
+        Given the positions of an agent and a sequence of positions of all fire,
+        returns the positions of the closest fire
         """
         min = math.inf
-        closest_prey_position = None
-        n_preys = int(len(prey_positions) / 2)
-        for p in range(n_preys):
-            prey_position = prey_positions[p * 2], prey_positions[(p * 2) + 1]
-            distance = cityblock(agent_position, prey_position)
-            if prey_position == (-1, -1):
+        closest_fire_position = None
+        n_fires = int(len(fire_positions) / 2)
+        for p in range(n_fires):
+            fire_position = fire_positions[p * 2], fire_positions[(p * 2) + 1]
+            distance = cityblock(agent_position, fire_position)
+            if fire_position == (-1, -1):
                 continue
             if agent_id == 0:
-                if distance < min and prey_position[0] < size//2:
+                if distance < min and fire_position[0] < size//2:
                     min = distance
-                    closest_prey_position = prey_position
+                    closest_fire_position = fire_position
             else:
-                if distance < min and prey_position[0] >= size // 2:
+                if distance < min and fire_position[0] >= size // 2:
                     min = distance
-                    closest_prey_position = prey_position
-        return closest_prey_position
+                    closest_fire_position = fire_position
+        return closest_fire_position
 
 class GreedyAgent(Agent):
-    
-    """
-    A baseline agent for the SimplifiedPredatorPrey environment.
-    The greedy agent finds the nearest prey and moves towards it.
-    """
+ 
 
     def __init__(self, agent_id, n_agents):
         super(GreedyAgent, self).__init__(f"Greedy Agent")
@@ -274,39 +265,39 @@ class GreedyAgent(Agent):
         obs = [int(x) for x in list(env._make_gym_obs()[0][0])]
 
         agents_positions = obs[(len(obs) - self.n_agents * 3):]
-        prey_positions = obs[:(len(obs) - self.n_agents * 3)]
+        fire_positions = obs[:(len(obs) - self.n_agents * 3)]
 
-        fire_positions = []
-        for ele in range(0,len(prey_positions)):
+        aux_fire_positions = []
+        for ele in range(0,len(fire_positions)):
             if ele % 3 != 2:
-                fire_positions.append(prey_positions[ele])
+                aux_fire_positions.append(fire_positions[ele])
                 
         agent_position = agents_positions[self.agent_id * 3], agents_positions[(self.agent_id * 3) + 1]
-        closest_prey = self.closest_prey(agent_position, fire_positions)
-        prey_found = closest_prey is not None
-        return direction_to_go(agent_position, closest_prey) if prey_found else random.randrange(N_ACTIONS)
+        closest_fire = self.closest_fire(agent_position, aux_fire_positions)
+        fire_found = closest_fire is not None
+        return direction_to_go(agent_position, closest_fire) if fire_found else random.randrange(N_ACTIONS)
 
     # ################# #
     # Auxiliary Methods #
     # ################# #
 
-    def closest_prey(self, agent_position, prey_positions):
+    def closest_fire(self, agent_position, fire_positions):
         """
-        Given the positions of an agent and a sequence of positions of all prey,
-        returns the positions of the closest prey
+        Given the positions of an agent and a sequence of positions of all fire,
+        returns the positions of the closest fire
         """
         min = math.inf
-        closest_prey_position = None
-        n_preys = int(len(prey_positions) / 2)
-        for p in range(n_preys):
-            prey_position = prey_positions[p * 2], prey_positions[(p * 2) + 1]
-            distance = cityblock(agent_position, prey_position)
-            if prey_position == (-1, -1):
+        closest_fire_position = None
+        n_fires = int(len(fire_positions) / 2)
+        for p in range(n_fires):
+            fire_position = fire_positions[p * 2], fire_positions[(p * 2) + 1]
+            distance = cityblock(agent_position, fire_position)
+            if fire_position == (-1, -1):
                 continue
             if distance < min:
                 min = distance
-                closest_prey_position = prey_position
-        return closest_prey_position
+                closest_fire_position = fire_position
+        return closest_fire_position
 
 class RandomAgent(Agent):
     
@@ -337,7 +328,6 @@ def main(game_count=1, render=False):
             GreedyAgent(agent_id=0, n_agents=2),
             GreedyAgent(agent_id=1, n_agents=2)
         ],
-
         "Coordinated Team": [
             CoordAgent(size, agent_id=0, n_agents=2),
             CoordAgent(size, agent_id=1, n_agents=2)
