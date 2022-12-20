@@ -4,7 +4,9 @@
 
 import math
 import os
+from random import random
 import sys
+
 
 import numpy as np
 import math
@@ -96,6 +98,9 @@ class Viewer(object):
 
         self.img_apple = pyglet.resource.image("apple.png")
         self.img_agent = pyglet.resource.image("agent.png")
+        self.img_fire = pyglet.resource.image("fogueira.png")
+        self.img_big_fire = pyglet.resource.image("gas-natural.png")
+    
 
     def close(self):
         self.window.close()
@@ -119,7 +124,8 @@ class Viewer(object):
         self.window.dispatch_events()
 
         self._draw_grid()
-        self._draw_food(env)
+        self._draw_fire(env)
+        
         self._draw_players(env)
 
         if return_rgb_array:
@@ -170,27 +176,41 @@ class Viewer(object):
             )
         batch.draw()
 
-    def _draw_food(self, env):
+    def _draw_fire(self, env):
         idxes = list(zip(*env.field.nonzero()))
-        apples = []
+        #idxes1 = idxes[(len(idxes)//2):]
+        fires = []
         batch = pyglet.graphics.Batch()
-
+        
         # print(env.field)
         for row, col in idxes:
-            apples.append(
-                pyglet.sprite.Sprite(
-                    self.img_apple,
-                    (self.grid_size + 1) * col,
-                    self.height - (self.grid_size + 1) * (row + 1),
-                    batch=batch,
+            if(env.field[row,col]==1):
+                fires.append(
+                    pyglet.sprite.Sprite(
+                        self.img_fire,
+                        (self.grid_size + 1) * col,
+                        self.height - (self.grid_size + 1) * (row + 1),
+                        batch=batch,
+                    )
                 )
-            )
-        for a in apples:
+            else:
+                fires.append(
+                    pyglet.sprite.Sprite(
+                        self.img_big_fire,
+                        (self.grid_size + 1) * col,
+                        self.height - (self.grid_size + 1) * (row + 1),
+                        batch=batch,
+                    )
+                )
+            
+        for a in fires:
             a.update(scale=self.grid_size / a.width)
+       
         batch.draw()
 
         for row, col in idxes:
             self._draw_badge(row, col, env.field[row, col])
+    
 
     def _draw_players(self, env):
         players = []

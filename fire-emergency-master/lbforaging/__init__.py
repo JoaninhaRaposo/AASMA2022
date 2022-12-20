@@ -14,12 +14,13 @@ for s, p, f, c, grid_obs in product(sizes, players, foods, coop, grid_observatio
             entry_point="lbforaging.foraging:ForagingEnv",
             kwargs={
                 "players": p,
-                "max_player_level": 3,
+                "max_player_level": 2,
                 "field_size": (s, s),
-                "max_food": f,
+                "max_fire": f,
                 "sight": sight,
                 "max_episode_steps": 50,
                 "force_coop": c,
                 "grid_observation": grid_obs,
+                "total_fires_fighted": 0
             },
         )
